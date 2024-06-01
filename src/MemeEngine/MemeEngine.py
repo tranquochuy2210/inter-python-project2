@@ -1,6 +1,6 @@
 """This module provides Meme with quotes."""
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from random import randint
 import os
 
@@ -30,6 +30,7 @@ class MemeEngine:
         """
         quote = f'{text} - {author}'
         out_path = f'{self.output_dir}/{randint(1,100000000)}.png'
+        font = ImageFont.load_default()
         print(img_path)
         img = Image.open(img_path)
         width = min(width, 500)
@@ -38,7 +39,23 @@ class MemeEngine:
         img = img.resize((width, height), Image.NEAREST)
         draw = ImageDraw.Draw(img)
         quote_height = randint(0, height)
-        quote_width = randint(0, width)
-        draw.text((quote_width, quote_height), quote, fill='white')
+        quote_width = randint(0, width-70)
+        def wrap_text(text, font, max_width):
+            lines = []
+            words = text.split()
+            line = ''
+            for word in words:
+                # Check the width of the line with the new word
+                if draw.textbbox((0, 0), line + word, font=font)[2] <= max_width:
+                    line += word + ' '
+                else:
+                    lines.append(line.strip())
+                    line = word + ' '
+            lines.append(line.strip())  # Add the last line
+            return lines
+        lines = wrap_text(quote, font, 70)
+        for line in lines:
+            draw.text((quote_width, quote_height), line, font=font, fill="black")
+            quote_height += draw.textbbox((0, 0), line, font=font)[3]
         img.save(out_path)
         return out_path

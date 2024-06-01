@@ -20,8 +20,6 @@ def setup():
                    './_data/DogQuotes/DogQuotesPDF.pdf',
                    './_data/DogQuotes/DogQuotesCSV.csv']
 
-    # TODO: Use the Ingestor class to parse all files in the
-    # quote_files variable
     quotes = []
     for file in quote_files:
         _quote =Ingestor.parse(file)
@@ -61,18 +59,24 @@ def meme_form():
 @app.route('/create', methods=['POST'])
 def meme_post():
     """ Create a user defined meme """
-    image_url = request.form['image_url']
-    body  = request.form['body']
-    author = request.form['author']
-    r = requests.get(image_url)
-    directory = './tmp'
-    os.makedirs(directory, exist_ok=True)
-    file_path = os.path.join(directory, f'{random.randint(1,1000000000000)}.jpg')
-    with open(file_path, 'wb') as file:
-        file.write(r.content)
-    path = meme.make_meme(file_path, body, author)
-    os.remove(file_path)
-    return render_template('meme.html', path=path)
+    try:
+        image_url = request.form['image_url']
+        body  = request.form['body']
+        author = request.form['author']
+        r = requests.get(image_url)
+        if r.status_code !=200:
+            raise Exception('cannot fetch image_url')
+        directory = './tmp'
+        os.makedirs(directory, exist_ok=True)
+        file_path = os.path.join(directory, f'{random.randint(1,1000000000000)}.jpg')
+        with open(file_path, 'wb') as file:
+            file.write(r.content)
+        path = meme.make_meme(file_path, body, author)
+        os.remove(file_path)
+        return render_template('meme.html', path=path)
+    except Exception as e:
+        print(f'Error when create meme {e}')
+        return "Looks like you have mentioned an invalid image URL. Kindly cross-check"
 
 
 if __name__ == "__main__":
